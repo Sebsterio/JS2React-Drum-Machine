@@ -3,14 +3,14 @@ import React from "react";
 const Pad = props => {
   const data = props.data;
   const symbol = data.keySymbol;
-  const isActive = data.isActive ? " active" : "";
+  const drumClassName = "drum-pad" + (props.isActive ? " active" : ""); // do: &&
   return (
     <div className="drum-pad-wrapper">
       <button
         id={"drum-pad" + symbol}
-        className={"drum-pad" + isActive}
+        className={drumClassName}
         onClick={()=>props.triggerPad(data)}
-        onTransitionEnd={()=>props.handleTransitionEnd(data)}
+        onTransitionEnd={()=>props.killPads()}
       >
         <kbd>{symbol}</kbd>
         <audio id={"sound-" + symbol} src={data.url}></audio>

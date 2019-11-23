@@ -1,94 +1,68 @@
 import React from "react";
 import Pad from "./pad";
-import { keys, soundBanks } from "../data";
 
 class Panel extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      keyBank: []
+      activatedKey: ""
     };
     this.triggerPad = this.triggerPad.bind(this);
     this.handleKeyDown = this.handleKeyDown.bind(this);
-    this.handleTransitionEnd = this.handleTransitionEnd.bind(this);
+    this.killPads = this.killPads.bind(this);
   }
 
   componentDidMount() {
-    this.createKeyBank(this.props.currentBankIndex);
     document.addEventListener("keydown", this.handleKeyDown);
-  }
-
-  componentDidUpdate(prevProps) {
-    if (prevProps.currentBankIndex !== this.props.currentBankIndex)
-      this.createKeyBank(this.props.currentBankIndex);
   }
 
   render() {
     return (
       <div id="panel">
-        {this.state.keyBank.map(pad => (
-          <Pad
-            key={pad.id}
-            data={pad}
-            triggerPad={this.triggerPad}
-            handleTransitionEnd={this.handleTransitionEnd}
-          />
-        ))}
+        {this.props.keyBank.map(pad => {
+          const isActive = pad.keySymbol === this.state.activatedKey;
+          return (
+            <Pad
+              key={pad.id}
+              data={pad}
+              isActive={isActive}
+              triggerPad={this.triggerPad}
+              killPads={this.killPads}
+            />
+          );
+        })}
       </div>
     );
   }
 
   playSound(symbol) {
-    const sound = document.getElementById("sound-"+symbol);
+    const sound = document.getElementById("sound-" + symbol);
     if (!sound) return;
     sound.currentTime = 0;
     sound.play();
   }
 
-  handleTransitionEnd(pad) {
-    const newKeyBank = [ ...this.state.keyBank ]
-    newKeyBank.map(key => {
-      if (key.keySymbol === pad.keySymbol) {
-        return key.isActive = false;
-      }
-    })
+  killPads() {
     this.setState({
-      keyBank: newKeyBank
-    })
+      activatedKey: ""
+    });
   }
 
   triggerPad(pad) {
-    this.playSound(pad.keySymbol);
-    this.props.display(pad.id);
-    const newKeyBank = [ ...this.state.keyBank ]
-    newKeyBank.map(key => {
-      if (key.keySymbol === pad.keySymbol) {
-        return key.isActive = true;
-      }
-    })
-    this.setState({
-      keyBank: newKeyBank
-    })
+    if (pad) {
+      this.playSound(pad.keySymbol);
+      this.props.updateMsg(pad.id);
+      this.setState({
+        activatedKey: pad.keySymbol
+      });
+    } else this.props.updateMsg("key not mapped");
   }
 
   handleKeyDown(e) {
-    const currentPad = this.state.keyBank.filter(key => {
+    const currentPad = this.props.keyBank.filter(key => {
       return key.keyCode === e.keyCode;
     })[0];
-    this.triggerPad(currentPad)
-  }
-
-  createKeyBank(bankIndex) {
-    this.props.display("Sound Bank #" + bankIndex);
-    const newBank = [];
-    for (let i = 0; i < keys.length; i++) {
-      newBank.push({
-        ...keys[i],
-        ...soundBanks[bankIndex][i],
-        isActive: false
-      });
-    }
-    this.setState({ keyBank: newBank });
+    this.triggerPad(currentPad);
   }
 }
 
